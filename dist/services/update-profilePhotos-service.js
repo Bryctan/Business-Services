@@ -1,14 +1,25 @@
-import { QueryError } from 'mysql2'
-import fs from 'fs-extra'
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_extra_1 = __importDefault(require("fs-extra"));
 //import connection from '../config/db-mysql';
-import cloudinary from '../libs/cloudinary';
-import deletephotoService from '../services/delete-profileData-service'
-
-let updateQuery: string, updateValues:any;
-let oldImageUrl: string, urlValuesToUpdate;
-let resultCloudinary: any, photo_url: string, publicId: string | null;
-let fieldName: string;
-
+const cloudinary_1 = __importDefault(require("../libs/cloudinary"));
+const delete_profileData_service_1 = __importDefault(require("../services/delete-profileData-service"));
+let updateQuery, updateValues;
+let oldImageUrl, urlValuesToUpdate;
+let resultCloudinary, photo_url, publicId;
+let fieldName;
 /*
 const updatePhotoCompany = async (dataToken: any, photoToUpdate: any, callback: any) => {
 
@@ -183,201 +194,171 @@ const updatePhotoGrocer = async (dataToken: any, photoToUpdate: any, callback: a
     }
 }
 */
-import pool from '../config/db-mysql';
-
-const updatePhotoCompany = async (dataToken: any, photoToUpdate: any, callback: any) => {
-
+const db_mysql_1 = __importDefault(require("../config/db-mysql"));
+const updatePhotoCompany = (dataToken, photoToUpdate, callback) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { role, email, id } = dataToken;
-        fieldName = photoToUpdate.fieldname
-
+        fieldName = photoToUpdate.fieldname;
         console.log("req.file", photoToUpdate);
-
         if (photoToUpdate !== undefined) {
             try {
-                resultCloudinary = await cloudinary.uploader.upload(photoToUpdate.path)
+                resultCloudinary = yield cloudinary_1.default.uploader.upload(photoToUpdate.path);
                 // { folder: 'tu-carpeta-en-cloudinary' }
-                photo_url = resultCloudinary.secure_url
-
+                photo_url = resultCloudinary.secure_url;
                 console.log(photoToUpdate.path);
                 console.log(resultCloudinary);
                 console.log("profile_photo_provider ", photo_url);
-            } catch (error) {
+            }
+            catch (error) {
                 console.log(error);
-                callback({ "error": "error subiendo imagen" })
+                callback({ "error": "error subiendo imagen" });
             }
         }
         console.log("fielName", fieldName);
-
         updateQuery = `UPDATE company SET ?? = ? WHERE nit_company = ?`;
         updateValues = [fieldName, photo_url, id];
-
-        oldImageUrl = `select ?? from company WHERE nit_company = ?`
-
+        oldImageUrl = `select ?? from company WHERE nit_company = ?`;
         urlValuesToUpdate = [fieldName, id];
-
-        publicId = await deletephotoService.deleteOldImage(oldImageUrl!, urlValuesToUpdate, fieldName)
-
-        pool.getConnection((err, connection) => {
+        publicId = yield delete_profileData_service_1.default.deleteOldImage(oldImageUrl, urlValuesToUpdate, fieldName);
+        db_mysql_1.default.getConnection((err, connection) => {
             if (err) {
                 console.log(err);
                 return callback(err);
             }
-            connection.query(updateQuery!, updateValues, async (err: QueryError | null, results) => {
+            connection.query(updateQuery, updateValues, (err, results) => __awaiter(void 0, void 0, void 0, function* () {
                 connection.release();
                 if (err) {
-                    let urlFailedInsert = resultCloudinary.public_id
+                    let urlFailedInsert = resultCloudinary.public_id;
                     console.log("urlFailedInsert", urlFailedInsert);
-
-                    callback({ "Error al actualizar la imagen de la compañia": err })
+                    callback({ "Error al actualizar la imagen de la compañia": err });
                     if (urlFailedInsert) {
-                        await cloudinary.uploader.destroy(urlFailedInsert);
+                        yield cloudinary_1.default.uploader.destroy(urlFailedInsert);
                     }
-
-                } else {
-                    console.log("exito");
-                    callback(null, { "imagen actualizada con éxito": photo_url })
-
-                    if (publicId) {
-                        await cloudinary.uploader.destroy(publicId);
-                    }
-                    fs.unlink(photoToUpdate.path)
                 }
-            })
-        })
-    } catch (error) {
+                else {
+                    console.log("exito");
+                    callback(null, { "imagen actualizada con éxito": photo_url });
+                    if (publicId) {
+                        yield cloudinary_1.default.uploader.destroy(publicId);
+                    }
+                    fs_extra_1.default.unlink(photoToUpdate.path);
+                }
+            }));
+        });
+    }
+    catch (error) {
         return callback(error);
     }
-}
-
-const updatePhotoProvider = async (dataToken: any, photoToUpdate: any, callback: any) => {
-
+});
+const updatePhotoProvider = (dataToken, photoToUpdate, callback) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { role, email, id } = dataToken;
-        fieldName = photoToUpdate.fieldname
-
+        fieldName = photoToUpdate.fieldname;
         console.log("req.file", photoToUpdate);
-
         if (photoToUpdate !== undefined) {
             try {
-                resultCloudinary = await cloudinary.uploader.upload(photoToUpdate.path)
-                photo_url = resultCloudinary.secure_url
-
+                resultCloudinary = yield cloudinary_1.default.uploader.upload(photoToUpdate.path);
+                photo_url = resultCloudinary.secure_url;
                 console.log(photoToUpdate.path);
                 console.log(resultCloudinary);
                 console.log("photo ", photo_url);
-            } catch (error) {
-                callback({ "error subiendo imagen": error })
+            }
+            catch (error) {
+                callback({ "error subiendo imagen": error });
             }
         }
         console.log("fielName", fieldName);
-
         updateQuery = `UPDATE provider SET ?? = ? WHERE document_provider = ?`;
         updateValues = [fieldName, photo_url, id];
-
-        oldImageUrl = `select ?? from provider WHERE document_provider = ?`
-
+        oldImageUrl = `select ?? from provider WHERE document_provider = ?`;
         urlValuesToUpdate = [fieldName, id];
-
-        let publicId: string | null = await deletephotoService.deleteOldImage(oldImageUrl!, urlValuesToUpdate, fieldName)
-
-        pool.getConnection((err, connection) => {
+        let publicId = yield delete_profileData_service_1.default.deleteOldImage(oldImageUrl, urlValuesToUpdate, fieldName);
+        db_mysql_1.default.getConnection((err, connection) => {
             if (err) {
                 console.log(err);
                 return callback(err);
             }
-
-            connection.query(updateQuery!, updateValues, async (err: QueryError | null, results) => {
+            connection.query(updateQuery, updateValues, (err, results) => __awaiter(void 0, void 0, void 0, function* () {
                 connection.release();
                 if (err) {
-                    let urlFailedInsert = resultCloudinary.public_id
+                    let urlFailedInsert = resultCloudinary.public_id;
                     console.log("urlFailedInsert", urlFailedInsert);
-
-                    callback({ "Error al actualizar la imagen del provider": err })
+                    callback({ "Error al actualizar la imagen del provider": err });
                     if (urlFailedInsert) {
-                        await cloudinary.uploader.destroy(urlFailedInsert);
+                        yield cloudinary_1.default.uploader.destroy(urlFailedInsert);
                     }
-                } else {
-                    console.log("exito");
-                    callback(null, { "imagen actualizada con éxito": photo_url })
-
-                    if (publicId) {
-                        await cloudinary.uploader.destroy(publicId);
-                    }
-                    fs.unlink(photoToUpdate.path)
                 }
-            })
-        })
-    } catch (error) {
-        return callback(error);
-
+                else {
+                    console.log("exito");
+                    callback(null, { "imagen actualizada con éxito": photo_url });
+                    if (publicId) {
+                        yield cloudinary_1.default.uploader.destroy(publicId);
+                    }
+                    fs_extra_1.default.unlink(photoToUpdate.path);
+                }
+            }));
+        });
     }
-}
-
-const updatePhotoGrocer = async (dataToken: any, photoToUpdate: any, callback: any) => {
-
+    catch (error) {
+        return callback(error);
+    }
+});
+const updatePhotoGrocer = (dataToken, photoToUpdate, callback) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { role, email, id } = dataToken;
-        fieldName = photoToUpdate.fieldname
-
+        fieldName = photoToUpdate.fieldname;
         console.log("req.file", photoToUpdate);
-
         if (photoToUpdate !== undefined) {
             try {
-                resultCloudinary = await cloudinary.uploader.upload(photoToUpdate.path)
-                photo_url = resultCloudinary.secure_url
-
+                resultCloudinary = yield cloudinary_1.default.uploader.upload(photoToUpdate.path);
+                photo_url = resultCloudinary.secure_url;
                 console.log(photoToUpdate.path);
                 console.log(resultCloudinary);
                 console.log("photo ", photo_url);
-            } catch (error) {
-                callback({ "error subiendo imagen": error })
+            }
+            catch (error) {
+                callback({ "error subiendo imagen": error });
             }
         }
         console.log("fielName", fieldName);
-
         updateQuery = `UPDATE grocer SET ?? = ? WHERE document_grocer = ?`;
         updateValues = [fieldName, photo_url, id];
-
-        oldImageUrl = `select ?? from grocer WHERE document_grocer = ?`
-
+        oldImageUrl = `select ?? from grocer WHERE document_grocer = ?`;
         urlValuesToUpdate = [fieldName, id];
-
-        let publicId: string | null = await deletephotoService.deleteOldImage(oldImageUrl!, urlValuesToUpdate, fieldName)
-        pool.getConnection((err, connection) => {
+        let publicId = yield delete_profileData_service_1.default.deleteOldImage(oldImageUrl, urlValuesToUpdate, fieldName);
+        db_mysql_1.default.getConnection((err, connection) => {
             if (err) {
                 console.log(err);
                 return callback(err);
             }
-            connection.query(updateQuery!, updateValues, async (err: QueryError | null, results) => {
+            connection.query(updateQuery, updateValues, (err, results) => __awaiter(void 0, void 0, void 0, function* () {
                 connection.release();
                 if (err) {
-                    let urlFailedInsert = resultCloudinary.public_id
+                    let urlFailedInsert = resultCloudinary.public_id;
                     console.log("urlFailedInsert", urlFailedInsert);
-
-                    callback({ "Error al actualizar imagen del grocer": err })
+                    callback({ "Error al actualizar imagen del grocer": err });
                     if (urlFailedInsert) {
-                        await cloudinary.uploader.destroy(urlFailedInsert);
+                        yield cloudinary_1.default.uploader.destroy(urlFailedInsert);
                     }
-                } else {
+                }
+                else {
                     console.log("exito");
-                    callback(null, { "imagen actualizada con éxito": photo_url })
-
+                    callback(null, { "imagen actualizada con éxito": photo_url });
                     console.log("publicId", publicId);
                     if (publicId) {
-                        await cloudinary.uploader.destroy(publicId);
+                        yield cloudinary_1.default.uploader.destroy(publicId);
                     }
-                    fs.unlink(photoToUpdate.path)
+                    fs_extra_1.default.unlink(photoToUpdate.path);
                 }
-            })
-        })
-    } catch (error) {
+            }));
+        });
+    }
+    catch (error) {
         return callback(error);
     }
-}
-
-export default {
+});
+exports.default = {
     updatePhotoCompany,
     updatePhotoProvider,
     updatePhotoGrocer
-}
+};
